@@ -1,0 +1,463 @@
+<!doctype html>
+<html>
+  <body>
+
+    <canvas id="myCanvas" width="650" height="200" style="border:1px solid #000000;"></canvas>
+    
+        <script> "use strict"
+
+            // this is a lot of code, get ready
+
+            function getRandomHexColor() {
+                    return '#' + Math.floor(Math.random() * 16777215).toString(16);              
+            }
+
+            function Leg(context, x, y, width, height, rotation, rotation_speed, color) {
+                this.context = context;
+                this.x = x;
+                this.y = y; 
+                this.width = width;
+                this.height = height;
+                this.rotation = rotation;
+                this.rotation_speed = rotation_speed;
+                this.color = color;
+            }
+
+            Leg.prototype.update = function () {
+                this.rotation += this.rotation_speed;
+            }
+
+            Leg.prototype.draw = function () {
+                this.context.save();
+                this.context.translate(this.x, this.y);
+                this.context.rotate(this.rotation);
+                this.context.fillStyle = this.color;
+                this.context.fillRect(0, 0, this.width, this.height);
+                this.context.restore();
+            }
+
+            function Ear(context, x, y, width, height, color) {
+                this.context = context;
+                this.x = x;
+                this.y = y; 
+                this.width = width;
+                this.height = height;
+                this.color = color;
+            }
+
+            Ear.prototype.draw = function () {
+                this.context.save();
+                this.context.translate(this.x, this.y);
+                this.context.fillStyle = this.color;
+                this.context.fillRect(0, 0, this.width, this.height);
+                this.context.restore();
+            }
+
+            function Eye(context, x, y, width, height, color) {
+                this.context = context;
+                this.x = x;
+                this.y = y; 
+                this.width = width;
+                this.height = height;
+                this.color = color;
+            }
+
+            Eye.prototype.draw = function () {
+                this.context.save();
+                this.context.translate(this.x, this.y);
+                this.context.fillStyle = "white";
+                this.context.fillRect(0, 0, this.width + 2, this.height + 2);
+                this.context.fillStyle = this.color;
+                this.context.fillRect(3, 1, this.width, this.height);
+                this.context.restore();
+            }
+
+            function Head(context, x, y, width, height, rotation, rotation_speed, eye_color, ear_color) {
+                this.context = context;
+                this.x = x;
+                this.y = y; 
+                this.width = width;
+                this.height = height;
+                this.rotation = rotation;
+                this.rotation_speed = rotation_speed;
+                this.eye_color = eye_color;
+                this.ear_color = ear_color;
+
+                this.ear = [
+                    new Ear(context, 5, -10, 5, 10, this.ear_color),
+                ];
+
+                this.eye = [
+                    new Eye(context, 15, 5, 5, 5, this.eye_color),
+                ]
+            }
+
+            Head.prototype.update = function () {
+                this.rotation += this.rotation_speed;
+
+                    var maxAngle = 30 * Math.PI / 180; 
+
+                    if (this.rotation > maxAngle || this.rotation < -maxAngle) {
+                        this.rotation_speed *= -1;
+                    }
+
+            }
+
+            Head.prototype.draw = function () {
+                this.context.save();
+                this.context.translate(this.x, this.y);
+                this.context.rotate(this.rotation);
+                this.context.fillStyle = this.color;
+                this.context.fillRect(0, 0, this.width, this.height);
+
+                this.ear.forEach(function (ear) {
+                    ear.draw();
+                });
+
+                this.eye.forEach(function (eye) {
+                    eye.draw();
+                });
+
+                this.context.restore();
+            }
+
+            function Horse(context, x, y, speed, width, height, color) {
+                this.context = context;
+                this.x = x;
+                this.y = y; 
+                this.speed = speed;
+                this.color = color;
+
+                var legColor = getRandomHexColor(); 
+                var eyeColor = getRandomHexColor(); 
+                var earColor = getRandomHexColor(); 
+
+                var legRotationSpeed = Math.random() * 0.1 + 0.05;
+
+                this.legs = [
+                
+                    new Leg(context, 5, 25, 5, 15, 0,  legRotationSpeed, legColor),
+                    new Leg(context, 40, 25, 5, 15, 0,  legRotationSpeed, legColor)
+                ]
+        
+
+                this.head = [
+                    new Head(context, 50, 5, 25, 15, 0, Math.random()/100, eyeColor, earColor)
+                ]
+            }
+
+            Horse.prototype.update = function () {
+                this.x += this.speed;
+                this.head[0].update();
+                this.legs.forEach(function (leg) {
+                    leg.update();
+                });
+            }
+
+            Horse.prototype.draw = function () {
+                this.context.save();
+                this.context.translate(this.x, this.y);
+                this.context.fillStyle = this.color;
+                this.context.fillRect(0, 0, 50, 25);
+
+                this.head.forEach(function (head) {
+                    head.draw();
+                });
+
+                this.legs.forEach(function (leg) {
+                    leg.draw();
+                });
+
+                this.context.restore();
+            }
+
+
+            window.onload = function() {
+                var canvas = document.getElementById('myCanvas');
+                var context = canvas.getContext('2d');
+
+                //store the horses
+                var horses = [
+                    new Horse(context, 15, 70, Math.random() + 0.1, 50, 25, getRandomHexColor()),
+                    new Horse(context, 15, 120, Math.random() + 0.1, 50, 25, getRandomHexColor()),
+                    new Horse(context, 15, 170, Math.random() + 0.1, 50, 25, getRandomHexColor())
+                ];  
+
+                requestAnimationFrame(mainLoop)
+
+                function mainLoop() {
+                    update();
+                    draw();
+                    requestAnimationFrame(mainLoop);
+                }
+
+                function update() {
+                    horses.forEach(function (horse) {
+                        horse.update();
+                    });
+                }
+
+                function draw() {
+                    context.clearRect(0,0, canvas.width, canvas.height);
+                    context.save();
+                    draw_background();
+                    horses.forEach(function (horse) {
+                        horse.draw();
+                    });
+
+                    draw_foreground();
+
+                    context.restore();
+                }
+
+                function draw_background() {
+                    context.font = "20px Arial";
+
+                     //grass
+                    context.beginPath();
+                    context.rect(0,50, canvas.width, canvas.height);
+                    context.fillStyle = '#137810';
+                    context.fill();
+
+                    //startline
+                    context.beginPath();
+                    context.rect(80, 50, 15, canvas.height - 50);
+                    context.fillStyle = 'red';
+                    context.fill();
+
+                    for(let i = 0; i < 5; i++) {
+                        if (i == 0) {
+                            context.beginPath();
+                            context.fillStyle = 'black';
+                            context.fillText("S", 80, 80 + 20 * i);
+                            context.fill();
+                        }
+                        if (i == 1) {
+                            context.beginPath();
+                            context.fillStyle = 'white';
+                            context.fillText("T", 80, 80 + 20 * i,);
+                            context.fill();
+                        }
+                        if (i == 2) {
+                            context.beginPath();
+                            context.fillStyle = 'black';
+                            context.fillText("A", 80, 80 + 20 * i,);
+                            context.fill();
+                        }
+                        if (i == 3) {
+                            context.beginPath();
+                            context.fillStyle = 'white';
+                            context.fillText("R", 80, 80 + 20 * i,);                   
+                            context.fill();
+                        }
+                        if (i == 4) {
+                            context.beginPath();
+                            context.fillStyle = 'black';
+                            context.fillText("T", 80, 80 + 20 * i,);            
+                            context.fill();
+                        }
+                        
+                    }
+
+                    
+
+                    //finishline
+                    context.beginPath();
+                    context.rect(620, 50, 15, canvas.height - 50);
+                    context.fillStyle = 'black';
+                    context.fill();
+
+                    for(let i = 0; i < 3; i++) {
+                        if (i == 0) {
+                            context.beginPath();
+                            context.fillStyle = 'red';
+                            context.fillText("E", 620, 100 + 30 * i);
+                            context.fill();
+                        }
+                        if (i == 1) {
+                            context.beginPath();
+                            context.fillStyle = 'white';
+                            context.fillText("N", 620, 100 + 30 * i,);
+                            context.fill();
+                        }
+                        if (i == 2) {
+                            context.beginPath();
+                            context.fillStyle = 'red';
+                            context.fillText("D", 620, 100 + 30 * i,);
+                            context.fill();
+                        }
+                    }
+
+
+                    //sky
+                    context.beginPath();
+                    context.rect(0,0, canvas.width, 50);
+                    context.fillStyle = '#BFEEFF';
+                    context.fill();
+
+                    //sun
+                    context.beginPath();
+                    context.arc(630, 15, 10, 0, 2 * Math.PI);
+                    context.fillStyle = '#FFFF00';
+                    context.fill();
+
+                    //stands (loop is for window logic)
+                    context.beginPath();
+                    context.rect(30,20, 150, 30);
+                    context.fillStyle = 'grey';
+                    context.fill();
+                    for (let i = 0; i < 6; i++) {
+                        context.beginPath();
+                        context.rect(50 + 20 * i, 25, 10,10);
+                        context.fillStyle = 'black';
+                        context.fill();
+                    }
+                    context.beginPath();
+                    context.rect(185,10, 150, 40);
+                    context.fillStyle = 'grey';
+                    context.fill();
+                    for (let i = 0; i < 11; i++) {
+                        context.beginPath();
+                        context.rect(205 + 10 * i, 20, 10,10);
+                        context.fillStyle = 'black';
+                        context.fill();
+                    }
+                    context.beginPath();
+                    context.rect(340,25, 150, 25);
+                    context.fillStyle = 'grey';
+                    context.fill();
+                    for (let i = 0; i < 5; i++) {
+                        context.beginPath();
+                        context.rect(360 + 25 * i, 33, 10,10);
+                        context.fillStyle = 'black';
+                        context.fill();
+                    }
+                    context.beginPath();
+                    context.rect(500,35, 140, 15);
+                    context.fillStyle = 'grey';
+                    context.fill();
+                    for (let i = 0; i < 10; i++) {
+                        context.beginPath();
+                        context.rect(520 + 10 * i, 38, 10,10);
+                        context.fillStyle = 'black';
+                        context.fill();
+                    }
+                    
+                   
+
+                    //backpicket horizontal
+                    context.beginPath();
+                    context.rect(0,40, canvas.width, 2);
+                    context.fillStyle = 'white';
+                    context.fill();
+
+                    //backpicket vertical
+                    for(let i = 1; i <= 30; i++) {
+                        context.beginPath();
+                        context.rect(0 + canvas.width/30 * i, 40, 2, 10)
+                        context.fillStyle = 'white';
+                        context.fill();
+                    }
+                }
+
+
+                
+            function draw_foreground() {
+                //picket horizontal
+                context.beginPath();
+                context.rect(0,175, canvas.width, 10);
+                context.fillStyle = 'white';
+                context.fill();
+
+                //picket vertical
+                for(let i = 1; i <= 10; i++) {
+                    context.beginPath();
+                    context.rect(0 + canvas.width/10 * i, 175, 10, 25)
+                    context.fillStyle = 'white';
+                    context.fill();
+                }
+            }
+
+               
+
+                
+
+               
+
+                //old horse code
+                //body
+                // context.beginPath();
+                // context.rect(15,70, 50, 25);
+                // context.fillStyle = 'brown';
+                // context.fill();
+                // //backleg
+                // context.beginPath();
+                // context.rect(18,90, 5, 15);
+                // context.fillStyle = 'brown';
+                // context.fill();
+                // //frontleg
+                // context.beginPath();
+                // context.rect(55,90, 5, 15);
+                // context.fillStyle = 'brown';
+                // context.fill();
+                // //head
+                // context.beginPath();
+                // context.rect(55,65, 25, 15);
+                // context.fillStyle = 'brown';
+                // context.fill();
+                // //ear
+                // context.beginPath();
+                // context.rect(60,60, 10, 10);
+                // context.fillStyle = 'brown';
+                // context.fill();
+                // //eye
+                // context.beginPath();
+                // context.rect(72,68, 5, 5);
+                // context.fillStyle = 'white';
+                // context.fill();
+                // //pupil
+                // context.beginPath();
+                // context.rect(74,69, 3, 3);
+                // context.fillStyle = 'black';
+                // context.fill();
+
+                // //sir there's another horse
+                // //body
+                // context.beginPath();
+                // context.rect(15,70+50, 50, 25);
+                // context.fillStyle = 'black';
+                // context.fill();
+                // //backleg
+                // context.beginPath();
+                // context.rect(18,90+50, 5, 15);
+                // context.fillStyle = 'black';
+                // context.fill();
+                // //frontleg
+                // context.beginPath();
+                // context.rect(55,90+50, 5, 15);
+                // context.fillStyle = 'black';
+                // context.fill();
+                // //head
+                // context.beginPath();
+                // context.rect(55,65+50, 25, 15);
+                // context.fillStyle = 'black';
+                // context.fill();
+                // //ear
+                // context.beginPath();
+                // context.rect(60,60+50, 10, 10);
+                // context.fillStyle = 'black';
+                // context.fill();
+                // //eye
+                // context.beginPath();
+                // context.rect(72,68+50, 5, 5);
+                // context.fillStyle = 'white';
+                // context.fill();
+                // //pupil
+                // context.beginPath();
+                // context.rect(74,69+50, 3, 3);
+                // context.fillStyle = 'black';
+                // context.fill();
+            }
+        </script>
+</body>
+</html>
